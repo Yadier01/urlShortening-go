@@ -1,0 +1,13 @@
+<!doctype html>
+<head>
+    <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+</head>
+<body>
+    <form hx-swap="beforeend" hx-post="/shorten" hx-target="#result">
+        <input type="text" name="url" />
+        <button hx-post="/shorten" type="submit">Submit</button>
+    </form>
+    {{block "url-mssg" .}}
+    <div id="result">{{ .Url }}</div>
+    {{end}}
+</body>
