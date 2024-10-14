@@ -2,11 +2,11 @@ package internal
 
 import (
 	"database/sql"
+	"fmt"
 	"html/template"
 	"log"
 	"math/rand"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -40,7 +40,7 @@ func (server *Server) setupRouter() {
 }
 
 type pageData struct {
-	Url string
+	Url template.HTML
 }
 
 const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -54,35 +54,43 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) form(w http.ResponseWriter, r *http.Request) {
-	str := r.FormValue("url")
+	userGivenURl := r.FormValue("url")
 
 	text := addCharToText()
 	shortenURl := r.Host + "/" + string(text)
 
-	//check if url ArreadyExist
-	normalURL, shortUrl, err := server.findNormalUrl(str)
+	server.checkIfUrlExist(w, userGivenURl)
+
+	dbShortUrl := server.addUrlDB(userGivenURl, shortenURl)
+	htmlResponse := makeResponse(dbShortUrl)
+
+	renderTemplate(w, "url-mssg", pageData{
+		Url: template.HTML(htmlResponse),
+	})
+	return
+}
+func (server *Server) checkIfUrlExist(w http.ResponseWriter, userGivenUrl string) {
+	//check if url AlreadyExist
+	normalURL, shortUrl, err := server.findNormalUrl(userGivenUrl)
 	if err != nil {
-		log.Fatal(err)
+		w.WriteHeader(http.StatusBadGateway)
+		return
 	}
-	if normalURL == str {
+	htmlResponse := makeResponse(shortUrl)
+
+	if normalURL == userGivenUrl {
+		w.WriteHeader(http.StatusFound)
 		renderTemplate(w, "url-mssg", pageData{
-			Url: shortUrl,
+			Url: template.HTML(htmlResponse),
 		})
 		return
 	}
-	//check if shortenUrl Already exist
-	_, shortUrl, err = server.findShortURL(shortenURl)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	//fix this later
-	if strings.HasSuffix(shortUrl, "/"+string(text)) {
-		text = addCharToText()
-		return
-	}
-
-	server.addUrlDB(str, shortenURl)
+}
+func makeResponse(url string) string {
+	return fmt.Sprintf(`
+    <input readonly id="myInput" value="%s">
+    <button onclick="getCopy()">Copy</button>
+`, url)
 }
 
 // util. change location later
@@ -93,7 +101,6 @@ func addCharToText() []byte {
 		randomIndex := rand.Intn(len(alphabet))
 		shortCode[i] = alphabet[randomIndex]
 	}
-
 	return shortCode
 }
 
@@ -103,6 +110,5 @@ func (server *Server) findShortenUrl(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	http.Redirect(w, r, normalUrl, http.StatusPermanentRedirect)
 }

@@ -15,11 +15,12 @@ func newResult(id int64, name string) *result {
 		Name: name,
 	}
 }
-func (server *Server) addUrlDB(urlName, shortenUrl string) {
+func (server *Server) addUrlDB(urlName, shortenUrl string) string {
 	_, err := server.DB.Exec(`INSERT INTO foo (name, shortUrl) VALUES(?, ?);`, urlName, shortenUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
+	return shortenUrl
 }
 func (server *Server) findShortURL(url string) (normalUrl string, shortUrl string, err error) {
 	sqlSt := `

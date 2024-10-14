@@ -1,13 +1,92 @@
 <!doctype html>
+<html lang="en">
+
 <head>
-    <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>URL Shortener</title>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <style>
+    body {
+      background-color: #333333;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+
+    .form {
+      display: flex;
+      justify-content: center;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    input {
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    #result {
+      display: none;
+      margin-top: 1rem;
+    }
+
+    button {
+      padding: 0.5rem 1rem;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
 </head>
+
 <body>
-    <form hx-swap="beforeend" hx-post="/shorten" hx-target="#result">
-        <input type="text" name="url" />
-        <button hx-post="/shorten" type="submit">Submit</button>
+  <div class="form">
+    <h1>URL Shortening</h1>
+    <p>
+      This might stop working at any time. If you want to see the
+      source code go to:
+      <a style="color: white" href="https://github.com/Yadier01/urlShortening-go">source code</a>
+    </p>
+    <form id="shortener-form" hx-post="/shorten" hx-target="#result" hx-swap="outerHTML">
+      <input placeholder="Add url to be shortened" type="text" name="url" required />
+      <button type="submit">Submit</button>
     </form>
     {{block "url-mssg" .}}
     <div id="result">{{ .Url }}</div>
     {{end}}
+  </div>
+
+  <script>
+    document.body.addEventListener("htmx:afterSwap", function (event) {
+      if (event.detail.target.id === "result") {
+        const form = document.getElementById("shortener-form");
+        if (form) {
+          form.style.display = "none";
+        }
+        const result = document.getElementById("result");
+        if (result) {
+          result.style.display = "block";
+        }
+      }
+    });
+
+    function getCopy() {
+      const copyText = document.getElementById("myInput");
+      copyText.select();
+      copyText.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(copyText.value);
+    }
+  </script>
 </body>
+
+</html>
